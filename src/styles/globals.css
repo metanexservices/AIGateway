@@ -100,17 +100,25 @@
   * {
     @apply border-border;
   }
-  
+
   body {
     @apply bg-background text-foreground font-sans antialiased;
+
     font-feature-settings: "rlig" 1, "calt" 1;
   }
-  
-  h1, h2, h3, h4, h5, h6 {
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     @apply font-semibold tracking-tight;
   }
-  
-  code, kbd, pre {
+
+  code,
+  kbd,
+  pre {
     @apply font-mono;
   }
 }
@@ -119,35 +127,35 @@
   .container {
     @apply mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl w-full;
   }
-  
+
   /* Tenant-branded elements */
   .tenant-primary {
     background-color: hsl(var(--tenant-primary));
   }
-  
+
   .tenant-primary-text {
     color: hsl(var(--tenant-primary));
   }
-  
+
   .tenant-primary-border {
     border-color: hsl(var(--tenant-primary));
   }
-  
+
   /* Gradient backgrounds for hero sections */
   .gradient-radial {
     background: radial-gradient(circle at 50% 0%, hsl(var(--primary) / 15%), transparent 50%);
   }
-  
+
   /* Security badge styling */
   .security-badge {
     @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20;
   }
-  
+
   /* Data card styling */
   .data-card {
     @apply rounded-lg border bg-card p-6 shadow-sm transition-all hover:shadow-md;
   }
-  
+
   /* Glow effect for important elements */
   .glow-effect {
     box-shadow: 0 0 20px hsl(var(--primary) / 30%);
@@ -158,7 +166,7 @@
   .text-balance {
     text-wrap: balance;
   }
-  
+
   /* Monospace utilities for technical data */
   .font-mono-sm {
     font-family: 'JetBrains Mono', monospace;
