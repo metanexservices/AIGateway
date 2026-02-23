@@ -1,29 +1,89 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/router";
-import { Shield, Mail, Building2, ArrowRight, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Building2, Mail, Lock, Shield, AlertCircle, Terminal } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function SignIn() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [tenantDomain, setTenantDomain] = useState("");
-  const [error, setError] = useState("");
+  const [tenantDomain, setTenantDomain] = useState("shieldai.local");
+  const [email, setEmail] = useState("user@shieldai.local");
+  const [password, setPassword] = useState("admin123");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  // Force dark mode and add matrix effect
+  useEffect(() => {
+    document.documentElement.classList.add("dark");
+    
+    // Matrix rain effect
+    const canvas = document.getElementById("matrix") as HTMLCanvasElement;
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*()_+-=[]{}|;:,.<>?";
+    const fontSize = 14;
+    const columns = canvas.width / fontSize;
+    const drops: number[] = [];
+
+    for (let i = 0; i < columns; i++) {
+      drops[i] = Math.random() * -100;
+    }
+
+    function draw() {
+      if (!ctx || !canvas) return;
+      
+      ctx.fillStyle = "rgba(3, 7, 18, 0.05)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = "#0ea5e9";
+      ctx.font = fontSize + "px monospace";
+
+      for (let i = 0; i < drops.length; i++) {
+        const text = chars[Math.floor(Math.random() * chars.length)];
+        ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+        if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+          drops[i] = 0;
+        }
+        drops[i]++;
+      }
+    }
+
+    const interval = setInterval(draw, 33);
+
+    const handleResize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
     setLoading(true);
+    setError("");
 
     try {
       const result = await signIn("credentials", {
-        email,
         tenantDomain,
+        email,
+        password,
         redirect: false,
       });
 
@@ -40,103 +100,170 @@ export default function SignIn() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-4">
-      {/* Animated Background Grid */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#0f172a_1px,transparent_1px),linear-gradient(to_bottom,#0f172a_1px,transparent_1px)] bg-[size:4rem_4rem] opacity-20"></div>
-      
-      {/* Glow Effects */}
-      <div className="absolute left-1/4 top-1/4 h-96 w-96 rounded-full bg-cyan-500/20 blur-[120px]"></div>
-      <div className="absolute bottom-1/4 right-1/4 h-96 w-96 rounded-full bg-blue-500/20 blur-[120px]"></div>
+    <div className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[#030712]">
+      {/* Matrix Background */}
+      <canvas
+        id="matrix"
+        className="absolute inset-0 opacity-20"
+        style={{ width: "100%", height: "100%" }}
+      />
 
-      <Card className="relative z-10 w-full max-w-md border-cyan-500/20 bg-slate-950/80 backdrop-blur-xl">
-        <CardHeader className="space-y-4 text-center">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 shadow-lg shadow-cyan-500/50">
-            <Shield className="h-9 w-9 text-white" />
+      {/* Gradient Overlay */}
+      <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 via-transparent to-emerald-500/5" />
+
+      {/* Scan Lines Effect */}
+      <div className="absolute inset-0 pointer-events-none opacity-10">
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(6, 182, 212, 0.03) 2px, rgba(6, 182, 212, 0.03) 4px)",
+          }}
+        />
+      </div>
+
+      {/* Login Card */}
+      <Card className="relative w-full max-w-md border-cyan-500/30 bg-[#0a0f1e]/95 backdrop-blur-xl shadow-2xl shadow-cyan-500/10">
+        <CardHeader className="space-y-6 text-center pb-8">
+          {/* Logo with Glow */}
+          <div className="mx-auto w-20 h-20 rounded-2xl bg-gradient-to-br from-cyan-500 to-emerald-500 flex items-center justify-center shadow-lg shadow-cyan-500/50 animate-pulse">
+            <Shield className="w-10 h-10 text-black" strokeWidth={2.5} />
           </div>
-          <div>
-            <CardTitle className="text-2xl font-bold text-white">Shield AI</CardTitle>
-            <CardDescription className="text-slate-400">
-              Enterprise AI Security Gateway
-            </CardDescription>
+
+          {/* Title with Glitch Effect */}
+          <div className="space-y-3">
+            <CardTitle className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-emerald-400 to-cyan-400 animate-pulse font-mono tracking-wider">
+              SHIELD AI
+            </CardTitle>
+            <div className="flex items-center justify-center gap-2 text-cyan-400/80">
+              <Terminal className="w-4 h-4" />
+              <CardDescription className="text-cyan-400/80 font-mono text-xs tracking-widest">
+                ENTERPRISE SECURITY GATEWAY
+              </CardDescription>
+            </div>
+          </div>
+
+          {/* Security Badge */}
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono">
+            <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            SECURE CONNECTION ESTABLISHED
           </div>
         </CardHeader>
 
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {error && (
-              <Alert variant="destructive" className="border-red-500/50 bg-red-500/10">
-                <Lock className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
+        <CardContent className="space-y-6">
+          {error && (
+            <Alert variant="destructive" className="bg-red-950/50 border-red-500/50">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription className="font-mono text-xs">{error}</AlertDescription>
+            </Alert>
+          )}
 
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Tenant Domain */}
             <div className="space-y-2">
-              <Label htmlFor="tenantDomain" className="text-slate-200">
-                <Building2 className="mr-2 inline h-4 w-4" />
-                Tenant Domain
+              <Label htmlFor="tenantDomain" className="flex items-center gap-2 text-cyan-400 font-mono text-xs tracking-wider">
+                <Building2 className="w-4 h-4" />
+                TENANT DOMAIN
               </Label>
               <Input
                 id="tenantDomain"
                 type="text"
-                placeholder="acme-corp"
+                placeholder="shieldai.local"
                 value={tenantDomain}
                 onChange={(e) => setTenantDomain(e.target.value)}
                 required
-                className="border-cyan-500/20 bg-slate-900/50 text-white placeholder:text-slate-500 focus:border-cyan-500"
+                className="bg-[#0a0f1e] border-cyan-500/30 focus:border-cyan-400 text-cyan-100 placeholder:text-cyan-800 font-mono h-12 focus:ring-2 focus:ring-cyan-500/20"
               />
             </div>
 
+            {/* Email */}
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-slate-200">
-                <Mail className="mr-2 inline h-4 w-4" />
-                Email Address
+              <Label htmlFor="email" className="flex items-center gap-2 text-cyan-400 font-mono text-xs tracking-wider">
+                <Mail className="w-4 h-4" />
+                EMAIL ADDRESS
               </Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="admin@company.com"
+                placeholder="user@shieldai.local"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="border-cyan-500/20 bg-slate-900/50 text-white placeholder:text-slate-500 focus:border-cyan-500"
+                className="bg-[#0a0f1e] border-cyan-500/30 focus:border-cyan-400 text-cyan-100 placeholder:text-cyan-800 font-mono h-12 focus:ring-2 focus:ring-cyan-500/20"
               />
             </div>
 
+            {/* Password */}
+            <div className="space-y-2">
+              <Label htmlFor="password" className="flex items-center gap-2 text-cyan-400 font-mono text-xs tracking-wider">
+                <Lock className="w-4 h-4" />
+                PASSWORD
+              </Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="Enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="bg-[#0a0f1e] border-cyan-500/30 focus:border-cyan-400 text-cyan-100 placeholder:text-cyan-800 font-mono h-12 focus:ring-2 focus:ring-cyan-500/20"
+              />
+            </div>
+
+            {/* Submit Button */}
             <Button
               type="submit"
+              className="w-full h-12 bg-gradient-to-r from-cyan-500 to-emerald-500 hover:from-cyan-400 hover:to-emerald-400 text-black font-bold font-mono tracking-wider shadow-lg shadow-cyan-500/30 transition-all duration-300 hover:shadow-cyan-500/50 hover:scale-[1.02]"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 font-semibold text-white hover:from-cyan-600 hover:to-blue-700"
             >
-              {loading ? "Signing in..." : "Sign In"}
-              <ArrowRight className="ml-2 h-4 w-4" />
+              {loading ? (
+                <span className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+                  AUTHENTICATING...
+                </span>
+              ) : (
+                "INITIATE SECURE ACCESS"
+              )}
             </Button>
           </form>
 
-          <div className="mt-6 space-y-4">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-cyan-500/20"></span>
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-slate-950 px-2 text-slate-400">Or continue with</span>
-              </div>
+          {/* Divider */}
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-cyan-500/20" />
             </div>
-
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full border-cyan-500/20 bg-slate-900/50 text-slate-300 hover:bg-cyan-500/10 hover:text-cyan-400"
-              onClick={() => signIn("azure-ad")}
-            >
-              Azure Active Directory
-            </Button>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-[#0a0f1e] px-3 text-cyan-600 font-mono tracking-widest">
+                ALTERNATE AUTH
+              </span>
+            </div>
           </div>
 
-          <p className="mt-6 text-center text-xs text-slate-500">
-            Protected by Shield AI encryption and multi-tenant isolation
-          </p>
+          {/* Azure AD Button */}
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full h-11 border-cyan-500/30 hover:border-cyan-400 hover:bg-cyan-500/5 text-cyan-400 font-mono text-sm tracking-wider transition-all duration-300"
+            onClick={() => signIn("azure-ad")}
+          >
+            Azure Active Directory
+          </Button>
+
+          {/* Footer */}
+          <div className="text-center text-xs text-cyan-600 pt-4 border-t border-cyan-500/20 font-mono space-y-2">
+            <div className="flex items-center justify-center gap-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span>AES-256 ENCRYPTED</span>
+            </div>
+            <div className="text-cyan-700">MULTI-TENANT ISOLATION ACTIVE</div>
+          </div>
         </CardContent>
       </Card>
+
+      {/* Corner Decorations */}
+      <div className="absolute top-4 left-4 w-16 h-16 border-t-2 border-l-2 border-cyan-500/30" />
+      <div className="absolute top-4 right-4 w-16 h-16 border-t-2 border-r-2 border-cyan-500/30" />
+      <div className="absolute bottom-4 left-4 w-16 h-16 border-b-2 border-l-2 border-cyan-500/30" />
+      <div className="absolute bottom-4 right-4 w-16 h-16 border-b-2 border-r-2 border-cyan-500/30" />
     </div>
   );
 }
