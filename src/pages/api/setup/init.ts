@@ -14,9 +14,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     if (existingTenant) {
-      return res.status(400).json({ 
-        error: "Database already initialized",
-        message: "Tenant and users already exist. Try logging in with existing credentials."
+      return res.status(200).json({
+        success: true,
+        message: "Database already initialized",
+        tenant: existingTenant.name,
       });
     }
 
@@ -25,16 +26,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       data: {
         name: "Shield AI Demo",
         domain: "shieldai.local",
-        primaryColor: "#06b6d4",
+        primaryColor: "#3b82f6",
         dailyTokenBudget: 1000000,
         promptStorageMode: "NONE",
         customBlacklist: ["Project Alpha", "Confidential"],
       },
     });
 
-    // Create super admin user
+    // Hash password
     const hashedPassword = await bcrypt.hash("admin123", 10);
-    
+
+    // Create super admin user
     const admin = await prisma.user.create({
       data: {
         email: "admin@shieldai.local",
@@ -48,7 +50,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     // Create regular user
-    const regularUser = await prisma.user.create({
+    const user = await prisma.user.create({
       data: {
         email: "user@shieldai.local",
         name: "Test User",
@@ -62,31 +64,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     return res.status(200).json({
       success: true,
-      message: "Database initialized successfully!",
-      tenant: {
-        name: tenant.name,
-        domain: tenant.domain,
-      },
-      users: [
-        {
+      message: "Database initialized successfully",
+      credentials: {
+        admin: {
           email: admin.email,
-          role: admin.role,
           password: "admin123",
+          domain: tenant.domain,
         },
-        {
-          email: regularUser.email,
-          role: regularUser.role,
+        user: {
+          email: user.email,
           password: "admin123",
+          domain: tenant.domain,
         },
-      ],
-      instructions: "You can now log in with these credentials at /auth/signin",
+      },
     });
   } catch (error: any) {
-    console.error("Database initialization error:", error);
-    return res.status(500).json({ 
-      error: "Database initialization failed",
-      details: error.message,
-      hint: "Make sure PostgreSQL is running and DATABASE_URL is configured correctly in .env.local"
+    console.error("Setup error:", error);
+    return res.status(500).json({
+      error: error.message || "Database initialization failed",
     });
   }
 }
