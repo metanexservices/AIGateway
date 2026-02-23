@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 enum Role {
@@ -40,6 +41,7 @@ model Tenant {
   users               User[]
   apiKeys             APIKey[]
   auditLogs           AuditLog[]
+  tokenUsage          TokenUsage[]
   
   @@index([domain])
 }
@@ -58,6 +60,7 @@ model User {
   updatedAt           DateTime            @updatedAt
   
   auditLogs           AuditLog[]
+  tokenUsage          TokenUsage[]
   
   @@unique([email, tenantId])
   @@index([tenantId])
@@ -104,7 +107,9 @@ model AuditLog {
 model TokenUsage {
   id                  String              @id @default(cuid())
   tenantId            String
+  tenant              Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   userId              String
+  user                User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   date                DateTime            @db.Date
   tokensUsed          Int
   redactionCount      Int
