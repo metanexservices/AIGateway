@@ -1,23 +1,17 @@
 {
-  "framework": "nextjs",
-  "redirects": [
-    {
-      "source": "/old-path",
-      "destination": "/new-path",
-      "permanent": true
+  "version": 2,
+  "env": {
+    "DATABASE_URL": "@database-url",
+    "NEXTAUTH_URL": "@nextauth-url",
+    "NEXTAUTH_SECRET": "@nextauth-secret",
+    "ENCRYPTION_KEY": "@encryption-key"
+  },
+  "build": {
+    "env": {
+      "PRISMA_GENERATE_SKIP_AUTOINSTALL": "1"
     }
-  ],
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        {
-          "key": "X-Content-Type-Options",
-          "value": "nosniff"
-        }
-      ]
-    }
-  ],
-  "cleanUrls": true,
-  "trailingSlash": false
+  },
+  "installCommand": "npm install && npx prisma generate",
+  "buildCommand": "npx prisma migrate deploy && npm run build",
+  "devCommand": "npm run dev"
 }

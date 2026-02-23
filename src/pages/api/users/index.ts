@@ -52,8 +52,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       const { email, name, password, role, department, dailyTokenLimit } = validation.data;
 
-      // Check if user already exists
-      const existingUser = await prisma.user.findUnique({ where: { email } });
+      // Check if user already exists in this tenant
+      const existingUser = await prisma.user.findUnique({
+        where: {
+          email_tenantId: {
+            email,
+            tenantId,
+          },
+        },
+      });
       if (existingUser) {
         return res.status(409).json({ error: "User already exists" });
       }

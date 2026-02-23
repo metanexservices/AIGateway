@@ -2,7 +2,7 @@ import { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]";
 import { prisma } from "@/lib/prisma";
-import { encrypt, decrypt, maskApiKey } from "@/lib/encryption";
+import { encrypt, decrypt, maskAPIKey } from "@/lib/encryption";
 import { z } from "zod";
 
 const apiKeySchema = z.object({
@@ -51,7 +51,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const encryptedKey = encrypt(apiKey);
 
       // Create masked version
-      const maskedKey = maskApiKey(apiKey);
+      const maskedKey = maskAPIKey(apiKey);
 
       const newKey = await prisma.aPIKey.create({
         data: {

@@ -48,6 +48,7 @@ model User {
   id                  String              @id @default(cuid())
   email               String              
   name                String?
+  password            String
   role                Role                @default(USER)
   dailyTokenLimit     Int                 @default(100000)
   department          String?
