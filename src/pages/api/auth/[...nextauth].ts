@@ -3,6 +3,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import AzureADProvider from "next-auth/providers/azure-ad";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
+import bcrypt from "bcryptjs";
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -10,44 +11,59 @@ export const authOptions: NextAuthOptions = {
     CredentialsProvider({
       name: "Credentials",
       credentials: {
-        email: { label: "Email", type: "email" },
         tenantDomain: { label: "Tenant Domain", type: "text" },
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.tenantDomain) {
-          return null;
+        if (!credentials?.email || !credentials?.tenantDomain || !credentials?.password) {
+          throw new Error("Missing credentials");
         }
 
-        const tenant = await prisma.tenant.findUnique({
-          where: { domain: credentials.tenantDomain },
-        });
+        try {
+          // Find tenant
+          const tenant = await prisma.tenant.findUnique({
+            where: { domain: credentials.tenantDomain },
+          });
 
-        if (!tenant) {
-          return null;
-        }
+          if (!tenant) {
+            throw new Error("Invalid tenant domain");
+          }
 
-        const user = await prisma.user.findUnique({
-          where: {
-            email_tenantId: {
-              email: credentials.email,
-              tenantId: tenant.id,
+          // Find user
+          const user = await prisma.user.findUnique({
+            where: {
+              email_tenantId: {
+                email: credentials.email,
+                tenantId: tenant.id,
+              },
             },
-          },
-          include: { tenant: true },
-        });
+            include: { tenant: true },
+          });
 
-        if (!user) {
+          if (!user || !user.password) {
+            throw new Error("Invalid credentials");
+          }
+
+          // Verify password
+          const isValidPassword = await bcrypt.compare(credentials.password, user.password);
+
+          if (!isValidPassword) {
+            throw new Error("Invalid credentials");
+          }
+
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role,
+            tenantId: user.tenantId,
+            tenantDomain: tenant.domain,
+          };
+        } catch (error) {
+          console.error("Auth error:", error);
           return null;
         }
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
-          tenantId: user.tenantId,
-          tenantDomain: tenant.domain,
-        };
       },
     }),
     ...(process.env.AZURE_AD_CLIENT_ID
@@ -63,6 +79,7 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
+        token.id = user.id;
         token.role = user.role;
         token.tenantId = user.tenantId;
         token.tenantDomain = user.tenantDomain;
@@ -71,6 +88,7 @@ export const authOptions: NextAuthOptions = {
     },
     async session({ session, token }) {
       if (session.user) {
+        session.user.id = token.id as string;
         session.user.role = token.role as string;
         session.user.tenantId = token.tenantId as string;
         session.user.tenantDomain = token.tenantDomain as string;
@@ -80,12 +98,14 @@ export const authOptions: NextAuthOptions = {
   },
   pages: {
     signIn: "/auth/signin",
+    error: "/auth/signin",
   },
   session: {
     strategy: "jwt",
     maxAge: 24 * 60 * 60, // 24 hours
   },
   secret: process.env.NEXTAUTH_SECRET,
+  debug: process.env.NODE_ENV === "development",
 };
 
 export default NextAuth(authOptions);
