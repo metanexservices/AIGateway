@@ -1,0 +1,116 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  USER
+}
+
+enum PromptStorageMode {
+  NONE
+  REDACTED_ONLY
+  FULL
+}
+
+enum AIProvider {
+  OPENAI
+  GEMINI
+  ANTHROPIC
+}
+
+model Tenant {
+  id                  String              @id @default(cuid())
+  name                String
+  domain              String              @unique
+  logo                String?
+  primaryColor        String              @default("#3b82f6")
+  dailyTokenBudget    Int                 @default(1000000)
+  promptStorageMode   PromptStorageMode   @default(NONE)
+  customBlacklist     String[]            @default([])
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  
+  users               User[]
+  apiKeys             APIKey[]
+  auditLogs           AuditLog[]
+  
+  @@index([domain])
+}
+
+model User {
+  id                  String              @id @default(cuid())
+  email               String              
+  name                String?
+  role                Role                @default(USER)
+  dailyTokenLimit     Int                 @default(100000)
+  department          String?
+  tenantId            String
+  tenant              Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  
+  auditLogs           AuditLog[]
+  
+  @@unique([email, tenantId])
+  @@index([tenantId])
+  @@index([email])
+}
+
+model APIKey {
+  id                  String              @id @default(cuid())
+  tenantId            String
+  tenant              Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  provider            AIProvider
+  encryptedKey        String
+  maskedKey           String
+  lastVerified        DateTime?
+  isActive            Boolean             @default(true)
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  
+  @@index([tenantId])
+  @@index([provider])
+}
+
+model AuditLog {
+  id                  String              @id @default(cuid())
+  tenantId            String
+  tenant              Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userId              String
+  user                User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider            AIProvider
+  tokensUsed          Int
+  redactionCount      Int
+  categoriesTriggered String[]
+  estimatedCostUSD    Float
+  redactedPrompt      String?
+  rawPrompt           String?
+  aiResponse          String?
+  timestamp           DateTime            @default(now())
+  
+  @@index([tenantId])
+  @@index([userId])
+  @@index([timestamp])
+}
+
+model TokenUsage {
+  id                  String              @id @default(cuid())
+  tenantId            String
+  userId              String
+  date                DateTime            @db.Date
+  tokensUsed          Int
+  redactionCount      Int
+  requestCount        Int
+  createdAt           DateTime            @default(now())
+  
+  @@unique([tenantId, userId, date])
+  @@index([tenantId, date])
+  @@index([userId, date])
+}
