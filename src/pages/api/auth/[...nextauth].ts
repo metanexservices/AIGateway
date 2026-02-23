@@ -16,7 +16,14 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
+        console.log("🔐 AUTH ATTEMPT:", {
+          email: credentials?.email,
+          tenantDomain: credentials?.tenantDomain,
+          hasPassword: !!credentials?.password,
+        });
+
         if (!credentials?.email || !credentials?.tenantDomain || !credentials?.password) {
+          console.log("❌ Missing credentials");
           throw new Error("Missing credentials");
         }
 
@@ -25,6 +32,8 @@ export const authOptions: NextAuthOptions = {
           const tenant = await prisma.tenant.findUnique({
             where: { domain: credentials.tenantDomain },
           });
+
+          console.log("🏢 Tenant found:", tenant ? tenant.name : "NOT FOUND");
 
           if (!tenant) {
             throw new Error("Invalid tenant domain");
@@ -41,16 +50,23 @@ export const authOptions: NextAuthOptions = {
             include: { tenant: true },
           });
 
+          console.log("👤 User found:", user ? user.name : "NOT FOUND");
+          console.log("🔑 User has password:", !!user?.password);
+
           if (!user || !user.password) {
             throw new Error("Invalid credentials");
           }
 
           // Verify password
+          console.log("🔒 Comparing password...");
           const isValidPassword = await bcrypt.compare(credentials.password, user.password);
+          console.log("✅ Password valid:", isValidPassword);
 
           if (!isValidPassword) {
             throw new Error("Invalid credentials");
           }
+
+          console.log("🎉 AUTH SUCCESS for:", user.email);
 
           return {
             id: user.id,
@@ -61,7 +77,7 @@ export const authOptions: NextAuthOptions = {
             tenantDomain: tenant.domain,
           };
         } catch (error) {
-          console.error("Auth error:", error);
+          console.error("❌ AUTH ERROR:", error);
           return null;
         }
       },
@@ -105,7 +121,7 @@ export const authOptions: NextAuthOptions = {
     maxAge: 24 * 60 * 60, // 24 hours
   },
   secret: process.env.NEXTAUTH_SECRET,
-  debug: process.env.NODE_ENV === "development",
+  debug: true,
 };
 
 export default NextAuth(authOptions);
