@@ -135,7 +135,7 @@
   
   /* Gradient backgrounds for hero sections */
   .gradient-radial {
-    background: radial-gradient(circle at 50% 0%, hsl(var(--primary) / 0.15), transparent 50%);
+    background: radial-gradient(circle at 50% 0%, hsl(var(--primary) / 15%), transparent 50%);
   }
   
   /* Security badge styling */
@@ -150,7 +150,7 @@
   
   /* Glow effect for important elements */
   .glow-effect {
-    box-shadow: 0 0 20px hsl(var(--primary) / 0.3);
+    box-shadow: 0 0 20px hsl(var(--primary) / 30%);
   }
 }
 
